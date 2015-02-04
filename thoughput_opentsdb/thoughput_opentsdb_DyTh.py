@@ -1,61 +1,22 @@
+#!/usr/bin/env python
 '''
-Created on Dec 31, 2014
+Created on Feb 4, 2015
 
 @author: keyofspectator
 '''
-from _ast import Pass
-"""
-test throughput of database
-"""
 
+import sys
 import os
 import csv
 import time
 import MySQLdb
 import threading
 
-#INPUT_PATH = "/home/chenzhi/Documents/test/throughput/split_equally_1/"
 
-#INPUT_PATH = "/home/keyofspectator/ubuntu_exp/throughput/split_equally_1/"
-
-INPUT_PATH = "/home/keyofspectator/ubuntu_exp/throughput/test_data/tsdb_single/"
-
-# INPUT_FILE_LIST = ["0_500000.csv"]
-INPUT_FILE_LIST = sorted([name for name in os.listdir(INPUT_PATH) if name.endswith('.csv')])
-INSERT_TASK_EVENTS = '''insert into task_events values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
-
-#
-TSDB_IP = '127.0.0.1'
 TSDB_PORT = '4242'
 
-TEST_TIME_OFFSET = 3600  
-
-
-def get_current_time():
-    localtime = time.localtime()
-    time_string = time.strftime("%Y-%m-%d %H:%M:%S", localtime)
-    return time_string
-
-#abondon
-def execute(db, cur, row):
-    """
-    code that will be operated when trigger
-    :param row:
-    :return: no return
-    """
-    # logging insert history, but there are too many insert, so just logging fail insert.
-    # logging.info('Insert ' + str(time.time()) + ' ' + str(row[0:6]))
-    try:
-        cur.execute(INSERT_TASK_EVENTS, row)
-        db.commit()
-    except Exception, e:
-        # logging.info('fail to insert value' + str(row))
-        # logging.info(traceback.format_exc())
-        pass
-    db.rollback()
-
 #
-def execute_put_tsdb_cpu(row , metric):
+def execute_put_tsdb_cpu(row , metric , TSDB_IP):
     """
     
     :param row:
@@ -71,13 +32,13 @@ def execute_put_tsdb_cpu(row , metric):
         command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
         os.system(command_str)
-        print command_str
+#         print command_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
-        Pass
+        pass
         
-def execute_put_tsdb_memory(row , metric):
+def execute_put_tsdb_memory(row , metric , TSDB_IP):
     """
     
     :param row:
@@ -93,13 +54,13 @@ def execute_put_tsdb_memory(row , metric):
         command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
         os.system(command_str)
-        print command_str
+#         print command_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
-        Pass
+        pass
         
-def execute_put_tsdb_disk(row , metric):
+def execute_put_tsdb_disk(row , metric , TSDB_IP):
     """
     
     :param row:
@@ -115,48 +76,20 @@ def execute_put_tsdb_disk(row , metric):
         command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
         os.system(command_str)
-        print command_str
+#         print command_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
-        Pass
+        pass
 
-def list_2_str(list_tmp):
-    """
-    list to string
-    
-    return string
-    """
-    tmp = ''.join(list_tmp)
-    return tmp
+def get_current_time():
+    localtime = time.localtime()
+    time_string = time.strftime("%Y-%m-%d %H:%M:%S", localtime)
+    return time_string
 
-#abandon
-def string_convert(str):
-    """
-    delete the last character of string
-    return fixed string
-    """
-    list_tmp = list(str)
-    del list_tmp[ len(list_tmp)-1 ]
-    return list_2_str(list_tmp)
-
-def string_fix(str):
-    """
-    delete the illegal characters in string , illegal characters: +,=
-    """
-    list_tmp = list(str)
-    i = 0
-    while i < len(list_tmp):
-        if list_tmp[i] == '+' or list_tmp[i] =='=':
-            del list_tmp[i]
-            i = i-1
-        i = i+1
-    return list_2_str(list_tmp) 
-#
-
-def simulate( input_file ):
+def simulate( input_file , TSDB_IP):
     time.sleep(0.1) # force current thread to release time slice, so other threads can gain time slice
-    print threading.currentThread().name, 'start at', get_current_time()
+#     print threading.currentThread().name, 'start at', get_current_time()
 
     # you must create a Cursor object. It will let
     #  you execute all the queries you need
@@ -169,9 +102,9 @@ def simulate( input_file ):
             
             
             #execute(db, cur, row)
-            execute_put_tsdb_cpu(row , 'google.data.cpu')
-            execute_put_tsdb_memory(row , 'google.data.memory')
-            execute_put_tsdb_disk(row , 'google.data.disk')
+            execute_put_tsdb_cpu(row , 'google.data.cpu' , TSDB_IP)
+            execute_put_tsdb_memory(row , 'google.data.memory' , TSDB_IP)
+            execute_put_tsdb_disk(row , 'google.data.disk' , TSDB_IP)
             
             row = reader.next()
     except StopIteration:
@@ -180,32 +113,52 @@ def simulate( input_file ):
     #db.close()
     print 'Insert %s ended.' % threading.current_thread().name
 
-if __name__ == "__main__":
+
+def main(argv):
+    """
+    param:
+    
+    argv[1] = FolderPath
+    argv[2] = ThreadNum
+    """
+    
+    _FolderPath = argv[1]
+    _ThreadNum_str = argv[2]
+    #_TSDB_port = argv[3]
+    _TSDB_port = "172.18.9.100"
+    
+    print "/*"
+    print " * exp_thoughput_opentsdb"
+    print " * Data 50W Line"
+    print " * "
+    print " * FolderPath = " + _FolderPath
+    print " * Thread Num = " + _ThreadNum_str
+    print " * /"
+    
+    _ThreadNum = int(_ThreadNum_str)
+    
+    
     start_time = time.time()
 
     thread_pool = []
-    # prepare for simulate
-    for fileName in INPUT_FILE_LIST:
-        
-        """
-        db = MySQLdb.connect(host="localhost",  # your host, usually localhost
-                          user="root",  # your username
-                          passwd="123",  # your password
-                          db="GoogleCluster")  # name of the data base
-                          
-        """
-        
-        
-        open_file = open(INPUT_PATH + fileName, 'r')
-        t = threading.Thread(target=simulate, name=fileName, args=( open_file,))
+    
+    for i in range(_ThreadNum):
+        open_file = open(_FolderPath + i + ".csv", 'r')
+        t = threading.Thread(target = simulate, name = i, args=( open_file,))
         thread_pool.append(t)
-
+        
     for thread in thread_pool:
         thread.start()
-
 
     # wait all threads end.
     for thread in thread_pool:
         thread.join()
 
-    print 'All insert end and cost', str(time.time() - start_time), 's.'
+    print 'Insert total time :  ', str(time.time() - start_time), 's'
+    print "thoughput : "  + (500000 / (time.time() - start_time)) + " opt/s" 
+        
+    print ""
+        
+        
+if __name__ == '__main__':
+    main(sys.argv)
