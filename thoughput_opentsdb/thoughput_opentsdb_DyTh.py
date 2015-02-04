@@ -9,11 +9,62 @@ import sys
 import os
 import csv
 import time
-import MySQLdb
 import threading
 
 
 TSDB_PORT = '4242'
+TEST_TIME_OFFSET = 200000000  
+
+
+def list_2_str(list_tmp):
+    """
+    list to string
+    
+    return string
+    """
+    tmp = ''.join(list_tmp)
+    return tmp
+
+
+def string_fix(str):
+    """
+    delete the illegal characters in string , illegal characters: +,=
+    """
+    list_tmp = list(str)
+    i = 0
+    while i < len(list_tmp):
+        if list_tmp[i] == '+' or list_tmp[i] =='=':
+            del list_tmp[i]
+            i = i-1
+        i = i+1
+    return list_2_str(list_tmp) 
+
+def fix_user_name(row):
+    """
+    fix the user name 
+    delete the illegal characters in string , illegal characters: +,=
+    """
+    row[6] = string_fix(row[6])
+    return row
+
+def fixed_execute(input_file , output_file):
+    
+    reader = csv.reader(input_file, delimiter=',', quoting=csv.QUOTE_NONE)
+    row = reader.next()
+    spanwriter = csv.writer(output_file , delimiter=',', quotechar='|' , quoting=csv.QUOTE_MINIMAL)
+    
+    #    
+    
+    try:
+        while row is not None:
+            row = fix_user_name(row)
+            spanwriter.writerow(row)
+            row = reader.next()
+    except StopIteration:
+        pass
+    input_file.close()
+    output_file.close()
+#     print 'fixed end'
 
 #
 def execute_put_tsdb_cpu(row , metric , TSDB_IP):
@@ -106,7 +157,10 @@ def simulate( input_file , TSDB_IP):
             execute_put_tsdb_memory(row , 'google.data.memory' , TSDB_IP)
             execute_put_tsdb_disk(row , 'google.data.disk' , TSDB_IP)
             
+            print row
+            
             row = reader.next()
+            
     except StopIteration:
         pass
     input_file.close()
@@ -118,14 +172,14 @@ def main(argv):
     """
     param:
     
-    argv[1] = FolderPath
+    argv[1] = FolderPath (end with /)
     argv[2] = ThreadNum
     """
     
     _FolderPath = argv[1]
     _ThreadNum_str = argv[2]
     #_TSDB_port = argv[3]
-    _TSDB_port = "172.18.9.100"
+    _TSDB_IP = "127.0.0.1"
     
     print "/*"
     print " * exp_thoughput_opentsdb"
@@ -137,14 +191,25 @@ def main(argv):
     
     _ThreadNum = int(_ThreadNum_str)
     
+    #fix data
+    for i in range(_ThreadNum):
+        
+        _INPUT_PATH_FIX = _FolderPath + str(i) + ".csv"
+        _OUTPUT_PATH_FIX = _FolderPath +  str(i) + "_tmp"+ ".csv"
+        
+        input_file = open(_INPUT_PATH_FIX, 'r')
+        output_file = open(_OUTPUT_PATH_FIX , 'wb')
+        
+        fixed_execute( input_file , output_file )
     
+    #
     start_time = time.time()
 
     thread_pool = []
     
     for i in range(_ThreadNum):
-        open_file = open(_FolderPath + i + ".csv", 'r')
-        t = threading.Thread(target = simulate, name = i, args=( open_file,))
+        open_file = open(_OUTPUT_PATH_FIX)
+        t = threading.Thread(target = simulate, name = i, args=( open_file, _TSDB_IP))
         thread_pool.append(t)
         
     for thread in thread_pool:
@@ -155,7 +220,7 @@ def main(argv):
         thread.join()
 
     print 'Insert total time :  ', str(time.time() - start_time), 's'
-    print "thoughput : "  + (500000 / (time.time() - start_time)) + " opt/s" 
+    print "thoughput : "  + str(500000 / (time.time() - start_time)) + " opt/s" 
         
     print ""
         
