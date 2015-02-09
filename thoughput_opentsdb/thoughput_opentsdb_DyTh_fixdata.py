@@ -78,12 +78,14 @@ def execute_put_tsdb_cpu(row , metric , TSDB_IP):
         date_s = int(time.time())                                              # current time
         #user = string_fix(row[6])
         user = row[6] # for fixed data
-        put_str = "put %s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[9] , row[2] , row[3] , row[4] , row[5] , user)
+        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[9] , row[2] , row[3] , row[4] , row[5] , user)
         
-        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
+#        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
-        os.system(command_str)
+#        os.system(command_str)
 #         print command_str
+        if  row[9] != '' :
+	       print put_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
@@ -100,12 +102,15 @@ def execute_put_tsdb_memory(row , metric , TSDB_IP):
         date_s = int(time.time())                                              # current time
         #user = string_fix(row[6])
         user = row[6] # for fixed data
-        put_str = "put %s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[10] , row[2] , row[3] , row[4] , row[5] , user)
+
+        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[10] , row[2] , row[3] , row[4] , row[5] , user)
         
-        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
+#        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
-        os.system(command_str)
+#        os.system(command_str)
 #         print command_str
+        if row[10] != "":
+	       print put_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
@@ -122,12 +127,14 @@ def execute_put_tsdb_disk(row , metric , TSDB_IP):
         date_s = int(time.time())                                              # current time
         #user = string_fix(row[6])
         user = row[6] # for fixed data
-        put_str = "put %s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[11] , row[2] , row[3] , row[4] , row[5] , user)
+        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[11] , row[2] , row[3] , row[4] , row[5] , user)
         
-        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
+#        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
-        os.system(command_str)
+#        os.system(command_str)
 #         print command_str
+        if row[11] != "" :
+	       print put_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
