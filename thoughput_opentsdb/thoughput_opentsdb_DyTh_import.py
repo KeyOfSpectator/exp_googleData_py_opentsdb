@@ -146,6 +146,7 @@ def excute_tsdb_import(input_file):
     """
     try:
         command_str = "tsdb import %s" % input_file
+        print command_str
         #command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
         os.system(command_str)
@@ -164,10 +165,8 @@ def simulate( input_file ):
     #cur = db.cursor()
     #reader = csv.reader(input_file, delimiter=',', quoting=csv.QUOTE_NONE)
 
-    excute_tsdb_import( input_file )
-
-
-            
+    try:
+        excute_tsdb_import( input_file )    
     except StopIteration:
         pass
     
@@ -204,9 +203,9 @@ def main(argv):
     thread_pool = []
     
     for i in range(_ThreadNum):
-        open_file = open(_OUTPUT_PATH_FIX)
+        #open_file = open(_OUTPUT_PATH_FIX)
         _INPUT_PATH = _FolderPath + str(i) + ".csv.gz"
-        t = threading.Thread(target = simulate, name = i, args=( _INPUT_PATH ))
+        t = threading.Thread(target = simulate, name = i, args=( _INPUT_PATH, ))
         thread_pool.append(t)
         
     for thread in thread_pool:
