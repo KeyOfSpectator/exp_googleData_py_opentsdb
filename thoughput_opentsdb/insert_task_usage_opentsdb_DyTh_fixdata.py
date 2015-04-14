@@ -103,7 +103,7 @@ def simulate( input_file , TSDB_IP , thread_id , data_line_everyThread , time_ba
     reader = csv.reader(input_file, delimiter=',', quoting=csv.QUOTE_NONE)
     row = reader.next()
 
-    data_start_base = thread_id * data_line_everyThread
+    data_start_base = time_base + thread_id * data_line_everyThread
     time_stamp = data_start_base
 
     try:
