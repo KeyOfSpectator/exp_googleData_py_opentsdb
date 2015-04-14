@@ -181,7 +181,7 @@ def simulate( input_file , TSDB_IP , thread_id , data_line_everyThread , time_ba
         pass
     input_file.close()
     #db.close()
-    print 'Insert %s ended.' % threading.current_thread().name
+    #print 'Insert %s ended.' % threading.current_thread().name
 
 
 def main(argv):
@@ -200,16 +200,16 @@ def main(argv):
     _TSDB_IP = "127.0.0.1"
 
 #info
-"""    
-    print "/*"
-    print " * exp_thoughput_opentsdb"
-    print " * Data 50W Line"
-    print " * "
-    print " * FolderPath = " + _FolderPath
-    print " * Thread Num = " + _ThreadNum_str
-    print " * Data line = " + _data_line_str
-    print " * /"
-"""
+    
+#    print "/*"
+#    print " * exp_thoughput_opentsdb"
+#    print " * Data 50W Line"
+#    print " * "
+#    print " * FolderPath = " + _FolderPath
+#    print " * Thread Num = " + _ThreadNum_str
+#    print " * Data line = " + _data_line_str
+#    print " * /"
+
 
     _ThreadNum = int(_ThreadNum_str)
     _data_line = int(_data_line_str)
