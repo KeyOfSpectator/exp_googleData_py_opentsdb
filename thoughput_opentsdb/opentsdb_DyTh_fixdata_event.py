@@ -67,7 +67,7 @@ def fixed_execute(input_file , output_file):
 #     print 'fixed end'
 
 #
-def execute_put_tsdb_cpu(row , metric , TSDB_IP):
+def execute_put_tsdb_event_cpu(row , metric ):
     """
     
     :param row:
@@ -91,7 +91,7 @@ def execute_put_tsdb_cpu(row , metric , TSDB_IP):
         #logging.info(traceback.format_exc())
         pass
         
-def execute_put_tsdb_memory(row , metric , TSDB_IP):
+def execute_put_tsdb_event_memory(row , metric ):
     """
     
     :param row:
@@ -116,7 +116,7 @@ def execute_put_tsdb_memory(row , metric , TSDB_IP):
         #logging.info(traceback.format_exc())
         pass
         
-def execute_put_tsdb_disk(row , metric , TSDB_IP):
+def execute_put_tsdb_event_disk(row , metric ):
     """
     
     :param row:
@@ -160,9 +160,9 @@ def simulate( input_file , TSDB_IP):
             
             
             #execute(db, cur, row)
-            execute_put_tsdb_cpu(row , 'google.data.cpu' , TSDB_IP)
-            execute_put_tsdb_memory(row , 'google.data.memory' , TSDB_IP)
-            execute_put_tsdb_disk(row , 'google.data.disk' , TSDB_IP)
+            execute_put_tsdb_event_cpu(row , 'google.event.cpu')
+            execute_put_tsdb_event_memory(row , 'google.event.memory' )
+            execute_put_tsdb_event_disk(row , 'google.event.disk' )
             
             #print row
             
@@ -184,12 +184,10 @@ def main(argv):
     """
     
     _FolderPath = argv[1]
-    _ThreadNum_str = argv[2]
+    _ThreadNum_str = 1
     #_TSDB_port = argv[3]
     _TSDB_IP = "127.0.0.1"
-
-#info
-"""    
+    
     print "/*"
     print " * exp_thoughput_opentsdb"
     print " * Data 50W Line"
@@ -197,15 +195,14 @@ def main(argv):
     print " * FolderPath = " + _FolderPath
     print " * Thread Num = " + _ThreadNum_str
     print " * /"
-"""
-
+    
     _ThreadNum = int(_ThreadNum_str)
     
     #fix data
     for i in range(_ThreadNum):
         
         _INPUT_PATH_FIX = _FolderPath + str(i) + ".csv"
-        _OUTPUT_PATH_FIX = _FolderPath +  str(i) + "_tmp"+ ".csv"
+        _OUTPUT_PATH_FIX = _FolderPath +  str(i) + "_fixed"+ ".csv"
         
         input_file = open(_INPUT_PATH_FIX, 'r')
         output_file = open(_OUTPUT_PATH_FIX , 'wb')
@@ -229,13 +226,11 @@ def main(argv):
     for thread in thread_pool:
         thread.join()
 
-#info
-"""
-    print 'Insert total time :  ', str(time.time() - start_time), 's'
-    print "thoughput : "  + str(500000 / (time.time() - start_time)) + " opt/s" 
+    #print 'Insert total time :  ', str(time.time() - start_time), 's'
+    #print "thoughput : "  + str(500000 / (time.time() - start_time)) + " opt/s" 
         
-    print ""
-"""     
+    #print ""
+        
         
 if __name__ == '__main__':
     main(sys.argv)

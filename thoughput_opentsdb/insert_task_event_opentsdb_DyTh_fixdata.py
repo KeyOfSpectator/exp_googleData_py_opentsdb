@@ -67,7 +67,7 @@ def fixed_execute(input_file , output_file):
 #     print 'fixed end'
 
 #
-def execute_put_tsdb_cpu(row , metric , TSDB_IP):
+def execute_put_tsdb_cpu(row , metric , TSDB_IP , time_stamp):
     """
     
     :param row:
@@ -78,20 +78,20 @@ def execute_put_tsdb_cpu(row , metric , TSDB_IP):
         date_s = int(time.time())                                              # current time
         #user = string_fix(row[6])
         user = row[6] # for fixed data
-        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[9] , row[2] , row[3] , row[4] , row[5] , user)
+        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, time_stamp , row[9] , row[2] , row[3] , row[4] , row[5] , user)
         
 #        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
 #        os.system(command_str)
 #         print command_str
         if  row[9] != '' :
-	       print put_str
+           print put_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
         pass
         
-def execute_put_tsdb_memory(row , metric , TSDB_IP):
+def execute_put_tsdb_memory(row , metric , TSDB_IP , time_stamp):
     """
     
     :param row:
@@ -103,20 +103,20 @@ def execute_put_tsdb_memory(row , metric , TSDB_IP):
         #user = string_fix(row[6])
         user = row[6] # for fixed data
 
-        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[10] , row[2] , row[3] , row[4] , row[5] , user)
+        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, time_stamp , row[10] , row[2] , row[3] , row[4] , row[5] , user)
         
 #        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
 #        os.system(command_str)
 #         print command_str
         if row[10] != "":
-	       print put_str
+           print put_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
         pass
         
-def execute_put_tsdb_disk(row , metric , TSDB_IP):
+def execute_put_tsdb_disk(row , metric , TSDB_IP , time_stamp):
     """
     
     :param row:
@@ -127,14 +127,14 @@ def execute_put_tsdb_disk(row , metric , TSDB_IP):
         date_s = int(time.time())                                              # current time
         #user = string_fix(row[6])
         user = row[6] # for fixed data
-        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, date_s , row[11] , row[2] , row[3] , row[4] , row[5] , user)
+        put_str = "%s %s %s job=%s task=%s machine=%s event=%s user=%s" % (metric, time_stamp , row[11] , row[2] , row[3] , row[4] , row[5] , user)
         
 #        command_str = "echo '%s' | nc -w 30 %s %s" % (put_str , TSDB_IP , TSDB_PORT)
         #insert put to tsdb
 #        os.system(command_str)
 #         print command_str
         if row[11] != "" :
-	       print put_str
+           print put_str
     except Exception, e:
         #logging.info('fail to insert value' + str(row))
         #logging.info(traceback.format_exc())
@@ -145,7 +145,7 @@ def get_current_time():
     time_string = time.strftime("%Y-%m-%d %H:%M:%S", localtime)
     return time_string
 
-def simulate( input_file , TSDB_IP):
+def simulate( input_file , TSDB_IP , thread_id , data_line_everyThread , time_base):
     time.sleep(0.1) # force current thread to release time slice, so other threads can gain time slice
 #     print threading.currentThread().name, 'start at', get_current_time()
 
@@ -154,16 +154,25 @@ def simulate( input_file , TSDB_IP):
     #cur = db.cursor()
     reader = csv.reader(input_file, delimiter=',', quoting=csv.QUOTE_NONE)
     row = reader.next()
+
+    data_start_base = thread_id * data_line_everyThread
+    time_stamp = data_start_base
+
     try:
         while row is not None:
             execute_time = time.time()
             
+            # this thread excute the data from (thread_id * data_line_everyThread) ~ (thread_id * data_line_everyThread + data_line_everyThread)
             
+
             #execute(db, cur, row)
-            execute_put_tsdb_cpu(row , 'google.data.cpu' , TSDB_IP)
-            execute_put_tsdb_memory(row , 'google.data.memory' , TSDB_IP)
-            execute_put_tsdb_disk(row , 'google.data.disk' , TSDB_IP)
             
+
+            execute_put_tsdb_cpu(row , 'google.data.event.cpu' , TSDB_IP , time_stamp )
+            execute_put_tsdb_memory(row , 'google.data.event.memory' , TSDB_IP , time_stamp)
+            execute_put_tsdb_disk(row , 'google.data.event.disk' , TSDB_IP , time_stamp)
+            
+            time_stamp = time_stamp + 1
             #print row
             
             row = reader.next()
@@ -181,10 +190,12 @@ def main(argv):
     
     argv[1] = FolderPath (end with /)
     argv[2] = ThreadNum
+    argv[3] = Data_line
     """
     
     _FolderPath = argv[1]
     _ThreadNum_str = argv[2]
+    _data_line_str = argv[3]
     #_TSDB_port = argv[3]
     _TSDB_IP = "127.0.0.1"
 
@@ -196,10 +207,12 @@ def main(argv):
     print " * "
     print " * FolderPath = " + _FolderPath
     print " * Thread Num = " + _ThreadNum_str
+    print " * Data line = " + _data_line_str
     print " * /"
 """
 
     _ThreadNum = int(_ThreadNum_str)
+    _data_line = int(_data_line_str)
     
     #fix data
     for i in range(_ThreadNum):
@@ -212,14 +225,18 @@ def main(argv):
         
         fixed_execute( input_file , output_file )
     
-    #
+    # for cal the thoughput 
     start_time = time.time()
+
+    # for every thread 
+    _time_base = int(time.time()) - 40000
+    _data_line_everyThread = _data_line/_ThreadNum + 1 
 
     thread_pool = []
     
     for i in range(_ThreadNum):
         open_file = open(_OUTPUT_PATH_FIX)
-        t = threading.Thread(target = simulate, name = i, args=( open_file, _TSDB_IP))
+        t = threading.Thread(target = simulate, name = i, args=( open_file, _TSDB_IP , i , _data_line_everyThread , _time_base))
         thread_pool.append(t)
         
     for thread in thread_pool:
